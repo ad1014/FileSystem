@@ -1,0 +1,75 @@
+
+sfs_init()
+    conn:
+    proto_major = 7
+    proto_minor = 23
+    async_read = 1
+    max_write = 131072
+    max_readahead = 131072
+    capable = 00000ffb
+    want = 00000010
+    context:
+    fuse = 00f4a510
+    uid = 0
+    gid = 0
+    pid = 0
+    private_data = 00f4a010
+    logfile = 00f4a030
+    diskfile = /home/anagha/Downloads/FileSystem/assignment2/testfile
+    umask = 00000
+
+sfs_getattr(path="/.Trash", statbuf=0xe61f1c20)
+
+sfs_opendir(path="/", fi=0xe61f1c50)
+
+sfs_getattr(path="/.xdg-volume-info", statbuf=0xe69f2c20)
+
+sfs_getattr(path="/autorun.inf", statbuf=0xe61f1c20)
+
+sfs_opendir(path="/", fi=0xe59f0c50)
+
+sfs_getattr(path="/.Trash-1000", statbuf=0xe69f2c20)
+
+sfs_opendir(path="/", fi=0xe69f2c50)
+
+sfs_opendir(path="/", fi=0xe69f2c50)
+
+sfs_opendir(path="/", fi=0xe69f2c50)
+
+sfs_opendir(path="/", fi=0xe69f2c50)
+
+sfs_opendir(path="/", fi=0xe69f2c50)
+
+sfs_opendir(path="/", fi=0xe69f2c50)
+
+sfs_opendir(path="/", fi=0xe69f2c50)
+
+sfs_opendir(path="/", fi=0xe69f2c50)
+
+sfs_opendir(path="/", fi=0xe69f2c50)
+
+sfs_opendir(path="/", fi=0xe69f2c50)
+
+sfs_opendir(path="/", fi=0xe69f2c50)
+
+sfs_opendir(path="/", fi=0xe69f2c50)
+
+sfs_opendir(path="/", fi=0xe69f2c50)
+
+sfs_opendir(path="/", fi=0xe69f2c50)
+
+sfs_opendir(path="/", fi=0xe69f2c50)
+
+sfs_opendir(path="/", fi=0xe69f2c50)
+
+sfs_opendir(path="/", fi=0xe69f2c50)
+
+sfs_opendir(path="/", fi=0xe69f2c50)
+
+sfs_opendir(path="/", fi=0xe69f2c50)
+
+sfs_opendir(path="/", fi=0xe69f2c50)
+
+sfs_getattr(path="/autorun.inf", statbuf=0xe59f0c20)
+
+sfs_destroy(userdata=0x00f4a010)
