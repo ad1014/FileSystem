@@ -49,11 +49,21 @@
 void *sfs_init(struct fuse_conn_info *conn)
 {
     fprintf(stderr, "in bb-init\n");
+    log_msg("Testing- log started- sfs_init()\n");
     log_msg("\nsfs_init()\n");
     
     log_conn(conn);
     log_fuse_context(fuse_get_context());
-
+    
+    
+    disk_open(SFS_DATA->diskfile);
+    //void *test="abcd";
+    //int output = block_read(0, test);
+    //int output=block_write(0,test);
+    //log_msg("Block read :");
+    //log_msg(output);
+    disk_close();
+    log_msg("Testing- exiting sfs_init()\n");
     return SFS_DATA;
 }
 
@@ -66,7 +76,9 @@ void *sfs_init(struct fuse_conn_info *conn)
  */
 void sfs_destroy(void *userdata)
 {
+    log_msg("Testing- in sfs_destroy()\n");
     log_msg("\nsfs_destroy(userdata=0x%08x)\n", userdata);
+    log_msg("Testing- exiting sfs_destroy()\n");
 }
 
 /** Get file attributes.
@@ -80,9 +92,10 @@ int sfs_getattr(const char *path, struct stat *statbuf)
     int retstat = 0;
     char fpath[PATH_MAX];
     
+    log_msg("Testing- in sfs_getattr()\n");
     log_msg("\nsfs_getattr(path=\"%s\", statbuf=0x%08x)\n",
 	  path, statbuf);
-    
+    log_msg("Testing- exiting sfs_getattr()\n");
     return retstat;
 }
 
@@ -101,10 +114,11 @@ int sfs_getattr(const char *path, struct stat *statbuf)
 int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 {
     int retstat = 0;
+    log_msg("Testing- in sfs_create()\n");
     log_msg("\nsfs_create(path=\"%s\", mode=0%03o, fi=0x%08x)\n",
 	    path, mode, fi);
     
-    
+    log_msg("Testing- exiting sfs_create()\n");
     return retstat;
 }
 
@@ -112,9 +126,10 @@ int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 int sfs_unlink(const char *path)
 {
     int retstat = 0;
+    log_msg("Testing- in sfs_unlink()\n");
     log_msg("sfs_unlink(path=\"%s\")\n", path);
 
-    
+    log_msg("Testing- exiting sfs_unlink()\n");
     return retstat;
 }
 
@@ -131,10 +146,12 @@ int sfs_unlink(const char *path)
 int sfs_open(const char *path, struct fuse_file_info *fi)
 {
     int retstat = 0;
+
+    log_msg("Testing- in sfs_open()\n");
     log_msg("\nsfs_open(path\"%s\", fi=0x%08x)\n",
 	    path, fi);
 
-    
+    log_msg("Testing- exiting sfs_open()\n");
     return retstat;
 }
 
@@ -155,10 +172,11 @@ int sfs_open(const char *path, struct fuse_file_info *fi)
 int sfs_release(const char *path, struct fuse_file_info *fi)
 {
     int retstat = 0;
+    log_msg("Testing- in sfs_release()\n");
     log_msg("\nsfs_release(path=\"%s\", fi=0x%08x)\n",
 	  path, fi);
     
-
+    log_msg("Testing- exiting sfs_release()\n");
     return retstat;
 }
 
@@ -336,9 +354,10 @@ int main(int argc, char *argv[])
     sfs_data->logfile = log_open();
     
     // turn over control to fuse
+    
     fprintf(stderr, "about to call fuse_main, %s \n", sfs_data->diskfile);
     fuse_stat = fuse_main(argc, argv, &sfs_oper, sfs_data);
     fprintf(stderr, "fuse_main returned %d\n", fuse_stat);
-    
+   
     return fuse_stat;
 }

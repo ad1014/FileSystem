@@ -1,3 +1,4 @@
+Testing- log started- sfs_init()
 
 sfs_init()
     conn:
@@ -9,67 +10,84 @@ sfs_init()
     capable = 00000ffb
     want = 00000010
     context:
-    fuse = 00f4a510
+    fuse = 00d0e510
     uid = 0
     gid = 0
     pid = 0
-    private_data = 00f4a010
-    logfile = 00f4a030
+    private_data = 00d0e010
+    logfile = 00d0e030
     diskfile = /home/anagha/Downloads/FileSystem/assignment2/testfile
     umask = 00000
+Testing- exiting sfs_init()
+Testing- in sfs_getattr()
 
-sfs_getattr(path="/.Trash", statbuf=0xe61f1c20)
+sfs_getattr(path="/.Trash", statbuf=0x55f6ac20)
+Testing- exiting sfs_getattr()
 
-sfs_opendir(path="/", fi=0xe61f1c50)
+sfs_opendir(path="/", fi=0x55f6ac50)
+Testing- in sfs_getattr()
 
-sfs_getattr(path="/.xdg-volume-info", statbuf=0xe69f2c20)
+sfs_getattr(path="/.xdg-volume-info", statbuf=0x55f6ac20)
+Testing- exiting sfs_getattr()
 
-sfs_getattr(path="/autorun.inf", statbuf=0xe61f1c20)
+sfs_opendir(path="/", fi=0x55769c50)
+Testing- in sfs_getattr()
 
-sfs_opendir(path="/", fi=0xe59f0c50)
+sfs_getattr(path="/autorun.inf", statbuf=0x55f6ac20)
+Testing- exiting sfs_getattr()
+Testing- in sfs_getattr()
 
-sfs_getattr(path="/.Trash-1000", statbuf=0xe69f2c20)
+sfs_getattr(path="/.Trash-1000", statbuf=0x55769c20)
+Testing- exiting sfs_getattr()
 
-sfs_opendir(path="/", fi=0xe69f2c50)
+sfs_opendir(path="/", fi=0x55f6ac50)
 
-sfs_opendir(path="/", fi=0xe69f2c50)
+sfs_opendir(path="/", fi=0x55f6ac50)
 
-sfs_opendir(path="/", fi=0xe69f2c50)
+sfs_opendir(path="/", fi=0x55f6ac50)
 
-sfs_opendir(path="/", fi=0xe69f2c50)
+sfs_opendir(path="/", fi=0x54f68c50)
 
-sfs_opendir(path="/", fi=0xe69f2c50)
+sfs_opendir(path="/", fi=0x54f68c50)
 
-sfs_opendir(path="/", fi=0xe69f2c50)
+sfs_opendir(path="/", fi=0x54f68c50)
 
-sfs_opendir(path="/", fi=0xe69f2c50)
+sfs_opendir(path="/", fi=0x54f68c50)
 
-sfs_opendir(path="/", fi=0xe69f2c50)
+sfs_opendir(path="/", fi=0x54f68c50)
 
-sfs_opendir(path="/", fi=0xe69f2c50)
+sfs_opendir(path="/", fi=0x54f68c50)
 
-sfs_opendir(path="/", fi=0xe69f2c50)
+sfs_opendir(path="/", fi=0x54f68c50)
 
-sfs_opendir(path="/", fi=0xe69f2c50)
+sfs_opendir(path="/", fi=0x54f68c50)
 
-sfs_opendir(path="/", fi=0xe69f2c50)
+sfs_opendir(path="/", fi=0x54f68c50)
 
-sfs_opendir(path="/", fi=0xe69f2c50)
+sfs_opendir(path="/", fi=0x54f68c50)
 
-sfs_opendir(path="/", fi=0xe69f2c50)
+sfs_opendir(path="/", fi=0x54f68c50)
 
-sfs_opendir(path="/", fi=0xe69f2c50)
+sfs_opendir(path="/", fi=0x54f68c50)
 
-sfs_opendir(path="/", fi=0xe69f2c50)
+sfs_opendir(path="/", fi=0x54f68c50)
 
-sfs_opendir(path="/", fi=0xe69f2c50)
+sfs_opendir(path="/", fi=0x54f68c50)
 
-sfs_opendir(path="/", fi=0xe69f2c50)
+sfs_opendir(path="/", fi=0x54f68c50)
 
-sfs_opendir(path="/", fi=0xe69f2c50)
+sfs_opendir(path="/", fi=0x54f68c50)
 
-sfs_opendir(path="/", fi=0xe69f2c50)
+sfs_opendir(path="/", fi=0x54f68c50)
+Testing- in sfs_getattr()
 
-sfs_getattr(path="/autorun.inf", statbuf=0xe59f0c20)
+sfs_getattr(path="/autorun.inf", statbuf=0x55f6ac20)
+Testing- exiting sfs_getattr()
+Testing- in sfs_getattr()
 
-sfs_destroy(userdata=0x00f4a010)
+sfs_getattr(path="/", statbuf=0x54f68bf0)
+Testing- exiting sfs_getattr()
+Testing- in sfs_destroy()
+
+sfs_destroy(userdata=0x00d0e010)
+Testing- exiting sfs_destroy()

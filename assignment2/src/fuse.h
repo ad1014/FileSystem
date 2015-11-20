@@ -602,6 +602,34 @@ struct fuse_context {
 	mode_t umask;
 };
 
+struct super_block{
+	unsigned int size;
+	unsigned int nblocks;
+	unsigned int ninode;
+};
+
+struct inode{
+
+	unsigned long i_ino;
+	mode_t i_mode;
+	//nlink_t nlink;
+	uid_t i_uid;
+	gid_t i_gid;
+
+	off_t i_size;
+	unsigned long   i_blksize;
+    unsigned long   i_blocks;
+    struct inode    *i_next, *i_prev;
+    struct inode    *single_indirect;
+
+
+    time_t    i_atime;  /*last access*/
+    time_t    i_mtime;  /*last modified*/
+    time_t    i_ctime;  /*last status change*/
+
+
+};
+
 /**
  * Main function of FUSE.
  *
