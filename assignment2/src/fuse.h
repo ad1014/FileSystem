@@ -611,8 +611,8 @@ struct super_block{
 	unsigned int size;
 	unsigned int nblocks;
 	unsigned int ninode;
-	int next_freei;
-	int next_freeb;
+	int inode_begin;
+	int block_begin;
 	struct index_table it[10];
 };
 
@@ -626,7 +626,7 @@ struct inode{
 
 	off_t i_size;
 	unsigned long   i_blksize;
-    unsigned long   i_blocks;
+    unsigned long   i_block;
     struct inode    *i_next, *i_prev;
     struct inode    *single_indirect;
 
@@ -634,6 +634,7 @@ struct inode{
     time_t    i_atime;  /*last access*/
     time_t    i_mtime;  /*last modified*/
     time_t    i_ctime;  /*last status change*/
+
 
 
 };
