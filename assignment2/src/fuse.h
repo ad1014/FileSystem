@@ -602,10 +602,18 @@ struct fuse_context {
 	mode_t umask;
 };
 
+struct index_table{
+	int fd;
+	int inode;
+};
+
 struct super_block{
 	unsigned int size;
 	unsigned int nblocks;
 	unsigned int ninode;
+	int next_freei;
+	int next_freeb;
+	struct index_table it[10];
 };
 
 struct inode{
@@ -629,6 +637,16 @@ struct inode{
 
 
 };
+
+struct file{
+	char* filepath;
+	struct inode *ip;
+	unsigned int off;
+};
+
+
+
+
 
 /**
  * Main function of FUSE.

@@ -60,33 +60,31 @@ void *sfs_init(struct fuse_conn_info *conn)
     disk_open(SFS_DATA->diskfile);
     char *readbuf;
     char *writebuf;
-    int status=block_read(0,&readbuf);
-    
+    //int status=block_read(0,&readbuf);
+    int status = 4387;
 
-    struct super_block* sb;
+    struct super_block sb;
     //writebuf=&sb;
     
-    if(status==0){//first time in sfs_init
-        sb = (struct super_block*)malloc(sizeof(struct super_block));
+    if(status==0 || status!=0){//first time in sfs_init
+        //sb = malloc(sizeof(struct super_block));
 
         log_msg("Testing- first time in sfs_init\n");
-        sb->size=131072;
-        sb->nblocks=256;
-        sb->ninode=0;
+        sb.size=6442;
+        sb.nblocks=256;
+        sb.ninode=4321;
         //log_msg("%d\n",sb.nblocks);
-        writebuf=sb;
+        writebuf=&status;
         int write_status=block_write(0,&writebuf);
         
         //log_msg("%d", write_status);
         if(write_status>0){
             log_msg("Testing- write successful %d\n",write_status);
-            struct super_block* testbuf;
+            int* testbuf;
             
             int x=block_read(0,&testbuf);
             log_msg("Read status %d\n",x);
-            log_msg("Block read %d\n",testbuf->size);
-            log_msg("Block read %d\n",testbuf->nblocks);
-            log_msg("Block read %d\n",testbuf->ninode);
+            log_msg("Block read %d\n",*testbuf);
         }
         
 

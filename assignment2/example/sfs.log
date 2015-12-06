@@ -10,84 +10,18 @@ sfs_init()
     capable = 00000ffb
     want = 00000010
     context:
-    fuse = 00d0e510
+    fuse = 01f1f510
     uid = 0
     gid = 0
     pid = 0
-    private_data = 00d0e010
-    logfile = 00d0e030
+    private_data = 01f1f010
+    logfile = 01f1f030
     diskfile = /home/anagha/Downloads/FileSystem/assignment2/testfile
     umask = 00000
+Testing- first time in sfs_init
+Testing- write successful 512
+Read status 512
+Block read 131072
+Block read 256
+Block read 0
 Testing- exiting sfs_init()
-Testing- in sfs_getattr()
-
-sfs_getattr(path="/.Trash", statbuf=0x55f6ac20)
-Testing- exiting sfs_getattr()
-
-sfs_opendir(path="/", fi=0x55f6ac50)
-Testing- in sfs_getattr()
-
-sfs_getattr(path="/.xdg-volume-info", statbuf=0x55f6ac20)
-Testing- exiting sfs_getattr()
-
-sfs_opendir(path="/", fi=0x55769c50)
-Testing- in sfs_getattr()
-
-sfs_getattr(path="/autorun.inf", statbuf=0x55f6ac20)
-Testing- exiting sfs_getattr()
-Testing- in sfs_getattr()
-
-sfs_getattr(path="/.Trash-1000", statbuf=0x55769c20)
-Testing- exiting sfs_getattr()
-
-sfs_opendir(path="/", fi=0x55f6ac50)
-
-sfs_opendir(path="/", fi=0x55f6ac50)
-
-sfs_opendir(path="/", fi=0x55f6ac50)
-
-sfs_opendir(path="/", fi=0x54f68c50)
-
-sfs_opendir(path="/", fi=0x54f68c50)
-
-sfs_opendir(path="/", fi=0x54f68c50)
-
-sfs_opendir(path="/", fi=0x54f68c50)
-
-sfs_opendir(path="/", fi=0x54f68c50)
-
-sfs_opendir(path="/", fi=0x54f68c50)
-
-sfs_opendir(path="/", fi=0x54f68c50)
-
-sfs_opendir(path="/", fi=0x54f68c50)
-
-sfs_opendir(path="/", fi=0x54f68c50)
-
-sfs_opendir(path="/", fi=0x54f68c50)
-
-sfs_opendir(path="/", fi=0x54f68c50)
-
-sfs_opendir(path="/", fi=0x54f68c50)
-
-sfs_opendir(path="/", fi=0x54f68c50)
-
-sfs_opendir(path="/", fi=0x54f68c50)
-
-sfs_opendir(path="/", fi=0x54f68c50)
-
-sfs_opendir(path="/", fi=0x54f68c50)
-
-sfs_opendir(path="/", fi=0x54f68c50)
-Testing- in sfs_getattr()
-
-sfs_getattr(path="/autorun.inf", statbuf=0x55f6ac20)
-Testing- exiting sfs_getattr()
-Testing- in sfs_getattr()
-
-sfs_getattr(path="/", statbuf=0x54f68bf0)
-Testing- exiting sfs_getattr()
-Testing- in sfs_destroy()
-
-sfs_destroy(userdata=0x00d0e010)
-Testing- exiting sfs_destroy()
