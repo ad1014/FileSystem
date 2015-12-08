@@ -105,17 +105,6 @@ void *sfs_init(struct fuse_conn_info *conn)
             log_msg("Error writing to disk\n");
         }
         
-        //log_msg("%d", write_status);
-        /*if(write_status>0){
-            log_msg("Testing- write successful %d\n",write_status);
-            struct super_block* testbuf;
-            
-            int x=block_read(0,&testbuf);
-            log_msg("Read status %d\n",x);
-            log_msg("Block read %d\n",testbuf->size);
-            log_msg("Block read %d\n",testbuf->nblocks);
-            log_msg("Block read %d\n",testbuf->ninode);
-        }*/
     }
     else if(status>0){
             /**
@@ -145,38 +134,6 @@ void *sfs_init(struct fuse_conn_info *conn)
                 log_msg("Error reading from disk\n");
             }
 
-
-            /*log_msg("Read status %d\n",x);
-            log_msg("Block read %d\n",testbuf->size);
-            log_msg("Block read %d\n",testbuf->nblocks);
-            log_msg("Block read %d\n",testbuf->ninode);
-
-            struct inode *first_file;
-            first_file= (struct inode*)malloc(sizeof(struct inode));
-            first_file->st_ino=010;
-            first_file->st_mode=5;
-            //first_file->='D';
-            first_file->st_uid=12;
-            first_file->st_gid=12;
-            first_file->st_size=500;
-            first_file->st_blocks=2;
-            char* writebuf1;
-            writebuf1=first_file;
-            int w_status=block_write(1,&writebuf1);
-            log_msg("Writing inode successful %d\n", w_status);
-
-            it[0].inode=10;
-            it[0].path="name";
-            
-            log_msg("%d\n",it[0].inode);
-            log_msg("%s\n",it[0].path);
-
-            //writebuf=&it[0];
-            writebuf=it;    
-            int w2_status=block_write(5,&writebuf);
-            log_msg("Wrote it table first entry\n");*/
-            
-            
    }
     else{
         log_msg("Error in sfs_init, Can't read block\n");
@@ -194,16 +151,6 @@ void *sfs_init(struct fuse_conn_info *conn)
  * Introduced in version 2.3
  */
 
-
-/*static void bb_fullpath(char fpath[PATH_MAX], const char *path)
-{
-    strcpy(fpath, SFS_DATA->rootdir);
-    strncat(fpath, path, PATH_MAX); // ridiculously long paths will
-                    // break here
-
-    log_msg("    bb_fullpath:  rootdir = \"%s\", path = \"%s\", fpath = \"%s\"\n",
-        SFS_DATA->rootdir,path, fpath);
-}*/
 
 void sfs_destroy(void *userdata)
 {
@@ -286,6 +233,7 @@ int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
     new_inode->st_blksize=512;
     new_inode->st_blocks=1;
     new_inode->data_block=sb->next_free_block;
+    new_inode->i_type='F';
 
     new_inode->st_atime=time(0);
     new_inode->st_mtime=time(0);
@@ -304,7 +252,7 @@ int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
     }
     else{
         log_msg("Error writing to disk\n");
-        retstat=1;
+        retstat=-1;
     }
     
     
@@ -315,7 +263,7 @@ int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
     }
     else{
         log_msg("Error writing to disk\n");
-        retstat=1;
+        retstat=-1;
     }
 
     writebuf=new_inode;
@@ -325,7 +273,7 @@ int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
     }
     else{
         log_msg("Error writing to disk\n");
-        retstat=1;
+        retstat=-1;
     }
 
 
@@ -349,7 +297,7 @@ int sfs_unlink(const char *path)
       if(strcmp(it[i].path,path)==0){  /*We found the entry to be deleted*/
             val=it[i].inode;
             it[i].path=NULL;
-            it[i].inode=0;
+            it[i].inode=-1;
             break;
             
 
@@ -377,7 +325,7 @@ int sfs_unlink(const char *path)
     }
     else{
         log_msg("Error writing to disk\n");
-        retstat=1;
+        retstat=-1;
     }
     
     
@@ -388,7 +336,7 @@ int sfs_unlink(const char *path)
     }
     else{
         log_msg("Error writing to disk\n");
-        retstat=1;
+        retstat=-1;
     }
 
     log_msg("Testing- exiting sfs_unlink()\n");
@@ -432,7 +380,7 @@ int sfs_open(const char *path, struct fuse_file_info *fi)
             }
             else{
                 log_msg("Error reading block\n");
-                retstat=1;
+                retstat=-1;
             }
             break;
       }
@@ -576,8 +524,69 @@ int sfs_write(const char *path, const char *buf, size_t size, off_t offset,
 int sfs_mkdir(const char *path, mode_t mode)
 {
     int retstat = 0;
+    char* writebuf;
     log_msg("\nsfs_mkdir(path=\"%s\", mode=0%3o)\n",
 	    path, mode);
+
+
+    /**
+     * Allocate memory for a new inode structure. Populate structure members according to the superblock values 
+     * and write this information to disk.
+     */
+
+    struct inode* new_inode=(struct inode *)malloc(sizeof(struct inode));
+    new_inode->st_ino=sb->next_free_inode;
+    new_inode->st_mode=mode;
+    new_inode->st_nlink=1;
+    new_inode->st_uid=getpwnam();
+    new_inode->st_gid=getgrgid();
+    new_inode->st_size=0;
+    new_inode->st_blksize=512;
+    new_inode->st_blocks=1;
+    new_inode->data_block=sb->next_free_block;
+    new_inode->i_type='D';
+
+    new_inode->st_atime=time(0);
+    new_inode->st_mtime=time(0);
+    new_inode->st_ctime=time(0);
+
+    it[sb->next_free_inode].inode=new_inode->st_ino;
+    it[sb->next_free_inode].path=path;
+
+    sb->next_free_inode=sb->next_free_inode+1;
+    sb->next_free_block=sb->next_free_block+1;
+
+    writebuf=sb;
+    int write_status=block_write(0,&writebuf);
+    if(write_status>0){
+        log_msg("Super block information was successfully written to disk\n");
+    }
+    else{
+        log_msg("Error writing to disk\n");
+        retstat=-1;
+    }
+    
+    
+    writebuf=it;
+    write_status=block_write(1,&writebuf);
+    if(write_status>0){
+        log_msg("Index table information was successfully written to disk\n");
+    }
+    else{
+        log_msg("Error writing to disk\n");
+        retstat=-1;
+    }
+
+    writebuf=new_inode;
+    write_status=block_write(new_inode->st_ino,&writebuf);
+    if(write_status>0){
+        log_msg("Inode was successfully written to disk\n");
+    }
+    else{
+        log_msg("Error writing to disk\n");
+        retstat=-1;
+    }
+
    
     
     return retstat;
@@ -588,8 +597,74 @@ int sfs_mkdir(const char *path, mode_t mode)
 int sfs_rmdir(const char *path)
 {
     int retstat = 0;
-    log_msg("sfs_rmdir(path=\"%s\")\n",
-	    path);
+    int i;
+    log_msg("sfs_rmdir(path=\"%s\")\n",path);
+
+    /**
+     * Find the inode for corresponding directory path. Check if it's a Directory.
+     * Check if the Directory is empty. Then delete Directory entry from Index-table.
+     * Update Super-block accordingly.
+     **/
+
+    int val,j;
+    for(i=0;i<sb->ninode;i++){
+      if(strcmp(it[i].path,path)==0){  /*We found the entry to be deleted*/
+            val=it[i].inode;
+
+            struct inode* readbuf;
+            
+            int status=block_read(val,&readbuf);
+            if(status>0 && readbuf->i_type=='D'){
+                if(it[i].child_nodes[0] == -1){    // Checking if the directory is empty
+                    it[i].path=NULL;
+                    it[i].inode=-1;
+                }
+                else{
+                    log_msg("Error : Directory not empty\n");
+                }
+            }
+            else{
+                log_msg("Error reading block\n");
+            }
+            break;
+        }
+    }
+
+    //Also check if that inode is present in the child-nodes list, if yes delete it 
+
+    for(i=0;i<sb->ninode-1;i++){
+      for(j=0;j<(sizeof(it[i].child_nodes)/sizeof(int));j++){
+        if(it[i].child_nodes[j]==val){
+            it[i].child_nodes[j]=NULL;
+        }
+      }
+    }
+
+    sb->next_free_inode=sb->next_free_inode-1;
+    sb->next_free_block=sb->next_free_block-1;
+    
+    char* writebuf;
+    writebuf=sb;
+    int write_status=block_write(0,&writebuf);
+    if(write_status>0){
+        log_msg("Super block information was successfully written to disk\n");
+    }
+    else{
+        log_msg("Error writing to disk\n");
+        retstat=-1;
+    }
+    
+    
+    writebuf=it;
+    write_status=block_write(1,&writebuf);
+    if(write_status>0){
+        log_msg("Index table information was successfully written to disk\n");
+    }
+    else{
+        log_msg("Error writing to disk\n");
+        retstat=-1;
+    }
+
     
     
     return retstat;
@@ -608,8 +683,6 @@ int sfs_opendir(const char *path, struct fuse_file_info *fi)
     int retstat=0;
     log_msg("Testing - In sfs_opendir\n");
 
-    
-    
     log_msg("Testing- Exiting opendir\n");
     return retstat;
 }
@@ -663,7 +736,7 @@ int sfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offse
             break;
       }
       else
-        retstat=1;
+        retstat=-1;
     }
 
     /*DIR *dp;

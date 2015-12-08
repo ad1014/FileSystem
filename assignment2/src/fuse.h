@@ -625,7 +625,7 @@ struct inode{
 	nlink_t st_nlink;
 	uid_t st_uid;
 	gid_t st_gid;
-	//unsigned char i_type;
+	unsigned char i_type;
 
 	off_t st_size;
 	blksize_t   st_blksize;
