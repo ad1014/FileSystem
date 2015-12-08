@@ -280,8 +280,8 @@ int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
     new_inode->st_ino=sb->next_free_inode;
     new_inode->st_mode=mode;
     new_inode->st_nlink=1;
-    //new_inode->st_uid=fi->uid;
-    //new_inode->st_gid=fi->gid;
+    new_inode->st_uid=getpwnam();
+    new_inode->st_gid=getgrgid();
     new_inode->st_size=0;
     new_inode->st_blksize=512;
     new_inode->st_blocks=1;
@@ -498,7 +498,33 @@ int sfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse
     log_msg("\nsfs_read(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
 	    path, buf, size, offset, fi);
 
-   
+    int block_num;
+    int i;
+    int file_descriptor;
+
+    /**
+     * Iterate through the index table to get inode corresponding to path.
+     * Get the data block from inode and read contents of the buffer to
+     * the position specified by offset. 
+     */
+
+    for(i=0;i<sb->ninode;i++){
+      if(strcmp(it[i].path,path)==0){  
+            block_num=it[i].inode;
+            struct inode* readbuf;
+            
+            int status=block_read(block_num,&readbuf);
+            if(status>0){
+                file_descriptor=readbuf->data_block;
+                retstat=pread(file_descriptor,&buf,size,offset);
+            }
+            else{
+                log_msg("Error reading block\n");
+            }
+            break;
+      }
+    }
+
     return retstat;
 }
 
