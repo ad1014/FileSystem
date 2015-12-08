@@ -46,7 +46,8 @@
  * Introduced in version 2.3
  * Changed in version 2.6
  */
-
+struct super_block* sb;
+struct index_table *it;
 static const char *hello_path="/home/anagha/testfolder";
 void *sfs_init(struct fuse_conn_info *conn)
 {
@@ -62,25 +63,47 @@ void *sfs_init(struct fuse_conn_info *conn)
     char *writebuf;
     int status=block_read(0,&readbuf);
     
-
-    struct super_block* sb;
     //writebuf=&sb;
     
-    if(status==0){//first time in sfs_init
+    if(status==0){
+        /**
+         * Disk file is accessed for the first time. We need to create a super block and initialize 
+         * its members. Also, need to write this information to disk for persistence.
+         */
         
         sb = (struct super_block*)malloc(sizeof(struct super_block));
 
-        //log_msg("Testing- first time in sfs_init\n");
         sb->size=131072;
         sb->nblocks=256;
         sb->ninode=0;
-        sb->inode_begin=1;
-        sb->block_begin=20;
-        //log_msg("%d\n",sb.nblocks);
+
+        sb->inode_begin=2;
+        sb->next_free_inode=2;
+
+        sb->data_block_begin=257;
+        sb->next_free_block=257;
+        
+    
         writebuf=sb;
         int write_status=block_write(0,&writebuf);
-
-        //ERROR HANDLING
+        if(write_status>0){
+            log_msg("Super block information was successfully written to disk\n");
+        }
+        else{
+            log_msg("Error writing to disk\n");
+        }
+        /**
+         *Also, create a struct for index table and write to disk
+         */
+        it = (struct index_table*)malloc(256*sizeof(struct index_table));
+        writebuf=it;
+        write_status=block_write(1,&writebuf);
+        if(write_status>0){
+            log_msg("Index table information was successfully written to disk\n");
+        }
+        else{
+            log_msg("Error writing to disk\n");
+        }
         
         //log_msg("%d", write_status);
         /*if(write_status>0){
@@ -95,45 +118,70 @@ void *sfs_init(struct fuse_conn_info *conn)
         }*/
     }
     else if(status>0){
-            /*struct super_block* testbuf;
+            /**
+            * This means disk was accessed before. We need to load super block information
+            * and  index table information from the disk. 
+            */
+
+            struct super_block* testbuf;
+            struct it* testbuf2;
             
-            int x=block_read(0,&testbuf);
-            log_msg("Read status %d\n",x);
+            int status=block_read(0,&testbuf);
+            sb=testbuf;
+            if(status>0){
+                log_msg("Super block was read successfully\n");
+            }
+            else{
+                log_msg("Error reading from disk\n");
+            }
+
+            status=block_read(1,&testbuf2);
+            it=testbuf2;
+
+            if(status>0){
+                log_msg("Index table was read successfully\n");
+            }
+            else{
+                log_msg("Error reading from disk\n");
+            }
+
+
+            /*log_msg("Read status %d\n",x);
             log_msg("Block read %d\n",testbuf->size);
             log_msg("Block read %d\n",testbuf->nblocks);
-            log_msg("Block read %d\n",testbuf->ninode);*/
-            log_msg("Disk was accessed before\n");
+            log_msg("Block read %d\n",testbuf->ninode);
+
             struct inode *first_file;
             first_file= (struct inode*)malloc(sizeof(struct inode));
-            first_file->i_ino=010;
-            first_file->i_mode=5;
-            first_file->i_uid=12;
-            first_file->i_gid=12;
-            first_file->i_size=500;
-            first_file->i_block=2;
+            first_file->st_ino=010;
+            first_file->st_mode=5;
+            //first_file->='D';
+            first_file->st_uid=12;
+            first_file->st_gid=12;
+            first_file->st_size=500;
+            first_file->st_blocks=2;
             char* writebuf1;
             writebuf1=first_file;
-
             int w_status=block_write(1,&writebuf1);
             log_msg("Writing inode successful %d\n", w_status);
 
+            it[0].inode=10;
+            it[0].path="name";
+            
+            log_msg("%d\n",it[0].inode);
+            log_msg("%s\n",it[0].path);
 
-    }
+            //writebuf=&it[0];
+            writebuf=it;    
+            int w2_status=block_write(5,&writebuf);
+            log_msg("Wrote it table first entry\n");*/
+            
+            
+   }
     else{
         log_msg("Error in sfs_init, Can't read block\n");
     }
     disk_close();
-    
-    //log_msg(hello_path);
-    
-    //char *test="abcd";
-   // char *test2;
-    
-    //int output=block_write(0,&test);
-     //output = block_read(0, &test2);
-   // log_msg("Block read :%s", test2);
-    //log_msg(output);
-    //disk_close();
     log_msg("Testing- exiting sfs_init()\n");
     return SFS_DATA;
 }
@@ -173,16 +221,32 @@ void sfs_destroy(void *userdata)
 int sfs_getattr(const char *path, struct stat *statbuf)
 {
     int retstat = 0;
-    char fpath[PATH_MAX];
     
     log_msg("Testing- in sfs_getattr()\n");
     log_msg("\nsfs_getattr(path=\"%s\", statbuf=0x%08x)\n",
-	  path, statbuf);
+	  path, statbuf);   
+    /**
+     * To get file statistics, traverse the index table to get inode number corresponding to the given path.
+     * Once, we have the inode number, get inode statistics from the corresponding block.
+     */
+    int i,val;
+    for(i=0;i<sb->ninode;i++){
+      if(strcmp(it[i].path,path)==0){  /*We found a match!*/
+            val=it[i].inode;
+            break;
+      }
+    }
 
-    retstat=lstat(path,statbuf);//takes care of the symbolic link as well unlike stat() 
-    log_stat(statbuf);
-    char *fullpath=realpath(path, NULL);
-    log_msg("Full path is %s\n", fullpath);
+    int status=block_read(val,&statbuf);
+    if(status>0){
+        log_msg("Data retrieved successfully %d\n",status);        
+    }
+    else{
+        log_msg("Error reading from block\n");
+        retstat=-1;
+    }
+    
+    
     log_msg("Testing- exiting sfs_getattr()\n");
     return retstat;
 }
@@ -202,12 +266,58 @@ int sfs_getattr(const char *path, struct stat *statbuf)
 int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
 {
     int retstat = 0;
-    int fd;
-
+    char *writebuf;
     log_msg("Testing- in sfs_create()\n");
     log_msg("\nsfs_create(path=\"%s\", mode=0%03o, fi=0x%08x)\n",
-	    path, mode, fi);
-    fd=open(path, fi->flags);
+        path, mode, fi);
+
+    /**
+     * Allocate memory for a new inode structure. Populate structure members according to the superblock values 
+     * and write this information to disk.
+     */
+
+    struct inode* new_inode=(struct inode *)malloc(sizeof(struct inode));
+    new_inode->st_ino=sb->next_free_inode;
+    new_inode->st_mode=mode;
+    new_inode->st_nlink=1;
+    //new_inode->st_uid=fi->uid;
+    //new_inode->st_gid=fi->gid;
+    new_inode->st_size=0;
+    new_inode->st_blksize=512;
+    new_inode->st_blocks=sb->next_free_block;
+
+    new_inode->st_mode=time(0);
+    new_inode->st_mode=time(0);
+    new_inode->st_mode=time(0);
+
+    it[sb->next_free_inode].inode=new_inode->st_ino;
+    it[sb->next_free_inode].path=path;
+
+    sb->next_free_inode=sb->next_free_inode+1;
+    sb->next_free_block=sb->next_free_block+1;
+
+    writebuf=sb;
+    int write_status=block_write(0,&writebuf);
+    if(write_status>0){
+        log_msg("Super block information was successfully written to disk\n");
+    }
+    else{
+        log_msg("Error writing to disk\n");
+        retstat=1;
+    }
+    
+    
+    writebuf=it;
+    write_status=block_write(1,&writebuf);
+    if(write_status>0){
+        log_msg("Index table information was successfully written to disk\n");
+    }
+    else{
+        log_msg("Error writing to disk\n");
+        retstat=1;
+    }
+
+
     log_msg("Testing- exiting sfs_create()\n");
     return retstat;
 }
@@ -218,6 +328,25 @@ int sfs_unlink(const char *path)
     int retstat = 0;
     log_msg("Testing- in sfs_unlink()\n");
     log_msg("sfs_unlink(path=\"%s\")\n", path);
+    
+    /**
+     * Delete the file's entry from the index table and change super block members accordingly.
+     */
+    
+    int i;
+    for(i=0;i<sb->ninode;i++){
+      if(strcmp(it[i].path,path)==0){  /*We found the entry to be deleted*/
+            it[i].path=NULL;
+            it[i].inode=0;
+            break;
+            //Also check if that inode is present in the child-nodes list, if yes delete it 
+            
+      }
+    }
+
+    sb->next_free_inode=sb->next_free_inode-1;
+    sb->next_free_block=sb->next_free_block-1;
+
 
     log_msg("Testing- exiting sfs_unlink()\n");
     return retstat;
@@ -378,54 +507,43 @@ int sfs_opendir(const char *path, struct fuse_file_info *fi)
 int sfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset,
 	       struct fuse_file_info *fi)
 {
-    /*int retstat = 0;
+    int retstat = 0;
     log_msg("Testing- in sfs_readdir()\n");
     log_msg("\nsfs_readdir(path=\"%s\", buf=0x%08x, filler=0x%08x, offset=%lld, fi=0x%08x)\n",
         path, buf, filler, offset, fi);
+    /**
+     * To read a directory, go through the index table to find entry for that directory's inode.
+     * When the match is found, iterate through it's child nodes and their paths to buffer
+     * using filler function.
+     */
+    filler(buf, ".", NULL, 0);
+    filler(buf, "..", NULL, 0);
     
-
-    DIR *dp;
-    struct dirent *de;
-
-    dp=(DIR *)path;
-   // log_msg("Testing- casting done\n");
-    de = readdir(dp);
-   // log_msg("Testing- Assigning done\n");
-   //char * file_name= de->d_name;
-   // log_msg("Filename is %s",file_name);
-    
-    do {
-    log_msg("calling filler with name %s\n", de->d_name);
-    if (filler(buf, de->d_name, NULL, 0) != 0) {
-        log_msg("    ERROR bb_readdir filler:  buffer full");
-        return -ENOMEM;
+    int i,j;
+    for(i=0;i<sb->ninode;i++){
+      if(strcmp(it[i].path,path)==0){ 
+            for(j=0;j<(sizeof(it[0].child_nodes)/sizeof(int));j++){
+                if(it[j].inode==it[i].child_nodes[j]){
+                    log_msg("Adding path %s\n",it[j].path);
+                    filler(buf, it[j].path, NULL, 0);
+                }
+                
+            }
+            break;
+      }
+      else
+        retstat=1;
     }
-    } while ((de = readdir(dp)) != NULL);
 
-
-  
-    log_msg("Testing- Exiting readdir()\n");
-    return retstat;*/
-
-
-    int retstat;
-    log_msg("Testing- in sfs_readdir()\n");
-    log_msg("\nsfs_readdir(path=\"%s\", buf=0x%08x, filler=0x%08x, offset=%lld, fi=0x%08x)\n",
-        path, buf, filler, offset, fi);
-    
-    //filler(buf, ".", NULL, 0);
-    //filler(buf, "..", NULL, 0);
-    DIR *dp;
+    /*DIR *dp;
     struct dirent *de;
-    dp = opendir(hello_path);
+    dp = opendir(path);
 
     while((de=readdir(dp))!=NULL){
-     log_msg("calling filler with name %s\n", de->d_name);
+     log_msg("Adding file %s\n", de->d_name);
      filler(buf, de->d_name, NULL, 0);
 
-    }
-    
-    //filler(buf, path + 1, NULL, 0);
+    }*/
 
     return retstat;
 

@@ -603,8 +603,9 @@ struct fuse_context {
 };
 
 struct index_table{
-	int fd;
 	int inode;
+	char* path;
+	int child_nodes[10];
 };
 
 struct super_block{
@@ -612,28 +613,32 @@ struct super_block{
 	unsigned int nblocks;
 	unsigned int ninode;
 	int inode_begin;
-	int block_begin;
+	int data_block_begin;
+	int next_free_inode;
+	int next_free_block;
 	struct index_table it[10];
 };
 
 struct inode{
 
-	unsigned long i_ino;
-	mode_t i_mode;
-	//nlink_t nlink;
-	uid_t i_uid;
-	gid_t i_gid;
+	ino_t st_ino;
+	mode_t st_mode;
+	nlink_t st_nlink;
+	uid_t st_uid;
+	gid_t st_gid;
+	unsigned char i_type;
 
-	off_t i_size;
-	unsigned long   i_blksize;
-    unsigned long   i_block;
-    struct inode    *i_next, *i_prev;
+	off_t st_size;
+	blksize_t   st_blksize;
+    blkcnt_t   st_blocks;
+   
+    //struct inode *next,*prev;
     struct inode    *single_indirect;
 
 
-    time_t    i_atime;  /*last access*/
-    time_t    i_mtime;  /*last modified*/
-    time_t    i_ctime;  /*last status change*/
+    time_t    st_atime;  /*last access*/
+    time_t    st_mtime;  /*last modified*/
+    time_t    st_ctime;  /*last status change*/
 
 
 
