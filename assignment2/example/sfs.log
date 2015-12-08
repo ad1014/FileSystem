@@ -10,12 +10,12 @@ sfs_init()
     capable = 00000ffb
     want = 00000010
     context:
-    fuse = 01392510
+    fuse = 018d2510
     uid = 0
     gid = 0
     pid = 0
-    private_data = 01392010
-    logfile = 01392030
+    private_data = 018d2010
+    logfile = 018d2030
     diskfile = /home/anagha/Downloads/FileSystem/assignment2/testfile
     umask = 00000
 Super block was read successfully

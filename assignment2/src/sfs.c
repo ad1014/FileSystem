@@ -80,7 +80,7 @@ void *sfs_init(struct fuse_conn_info *conn)
         sb->inode_begin=2;
         sb->next_free_inode=2;
 
-        sb->data_block_begin=257;
+        sb->data_block_begin=258;
         sb->next_free_block=257;
         
     
@@ -284,11 +284,12 @@ int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
     //new_inode->st_gid=fi->gid;
     new_inode->st_size=0;
     new_inode->st_blksize=512;
-    new_inode->st_blocks=sb->next_free_block;
+    new_inode->st_blocks=1;
+    new_inode->data_block=sb->next_free_block;
 
-    new_inode->st_mode=time(0);
-    new_inode->st_mode=time(0);
-    new_inode->st_mode=time(0);
+    new_inode->st_atime=time(0);
+    new_inode->st_mtime=time(0);
+    new_inode->st_ctime=time(0);
 
     it[sb->next_free_inode].inode=new_inode->st_ino;
     it[sb->next_free_inode].path=path;
@@ -317,6 +318,16 @@ int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
         retstat=1;
     }
 
+    writebuf=new_inode;
+    write_status=block_write(new_inode->st_ino,&writebuf);
+    if(write_status>0){
+        log_msg("Inode was successfully written to disk\n");
+    }
+    else{
+        log_msg("Error writing to disk\n");
+        retstat=1;
+    }
+
 
     log_msg("Testing- exiting sfs_create()\n");
     return retstat;
@@ -333,20 +344,52 @@ int sfs_unlink(const char *path)
      * Delete the file's entry from the index table and change super block members accordingly.
      */
     
-    int i;
+    int i, val,j;
     for(i=0;i<sb->ninode;i++){
       if(strcmp(it[i].path,path)==0){  /*We found the entry to be deleted*/
+            val=it[i].inode;
             it[i].path=NULL;
             it[i].inode=0;
             break;
-            //Also check if that inode is present in the child-nodes list, if yes delete it 
             
+
+      }
+    }
+
+    //Also check if that inode is present in the child-nodes list, if yes delete it 
+
+    for(i=0;i<sb->ninode-1;i++){
+      for(j=0;j<(sizeof(it[i].child_nodes)/sizeof(int));j++){
+        if(it[i].child_nodes[j]==val){
+            it[i].child_nodes[j]=NULL;
+        }
       }
     }
 
     sb->next_free_inode=sb->next_free_inode-1;
     sb->next_free_block=sb->next_free_block-1;
-
+    
+    char* writebuf;
+    writebuf=sb;
+    int write_status=block_write(0,&writebuf);
+    if(write_status>0){
+        log_msg("Super block information was successfully written to disk\n");
+    }
+    else{
+        log_msg("Error writing to disk\n");
+        retstat=1;
+    }
+    
+    
+    writebuf=it;
+    write_status=block_write(1,&writebuf);
+    if(write_status>0){
+        log_msg("Index table information was successfully written to disk\n");
+    }
+    else{
+        log_msg("Error writing to disk\n");
+        retstat=1;
+    }
 
     log_msg("Testing- exiting sfs_unlink()\n");
     return retstat;
@@ -365,12 +408,37 @@ int sfs_unlink(const char *path)
 int sfs_open(const char *path, struct fuse_file_info *fi)
 {
     int retstat = 0;
-    int fd;
+    int block_num,i;
+    int file_descriptor;
 
     log_msg("Testing- in sfs_open()\n");
     log_msg("\nsfs_open(path\"%s\", fi=0x%08x)\n",
 	    path, fi);
-    //fd=open(path, fi->flags);
+    /**
+     * We need to go through index table to get inode corresponding to the path.
+     * Then we fetch the inode and data block for that inode.
+     * This data block is returned as the file descriptor. It is also added to the fi->fh of
+     * fuse_file_info struct.
+     */
+    for(i=0;i<sb->ninode;i++){
+      if(strcmp(it[i].path,path)==0){  /*We found a match!*/
+            block_num=it[i].inode;
+            struct inode* readbuf;
+            
+            int status=block_read(block_num,&readbuf);
+            if(status>0){
+                file_descriptor=readbuf->data_block;
+                fi->fh=file_descriptor;
+            }
+            else{
+                log_msg("Error reading block\n");
+                retstat=1;
+            }
+            break;
+      }
+    }
+
+
     log_msg("Testing- exiting sfs_open()\n");
     return retstat;
 }
@@ -395,6 +463,19 @@ int sfs_release(const char *path, struct fuse_file_info *fi)
     log_msg("Testing- in sfs_release()\n");
     log_msg("\nsfs_release(path=\"%s\", fi=0x%08x)\n",
 	  path, fi);
+
+    /**
+     * Clear the fi->fh field of fuse_file_info so that
+     * read and write operations will not be performed on the file
+     * and the file is released.
+     */
+    if(fi->fh>0){
+        fi->fh=-1;
+
+    }
+    else{
+        retstat=-1;
+    }
     
     log_msg("Testing- exiting sfs_release()\n");
     return retstat;
@@ -433,9 +514,33 @@ int sfs_write(const char *path, const char *buf, size_t size, off_t offset,
 	     struct fuse_file_info *fi)
 {
     int retstat = 0;
+    int block_num;
+    int i;
+    int file_descriptor;
+
     log_msg("\nsfs_write(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
 	    path, buf, size, offset, fi);
-    
+    /**
+     * Iterate through the index table to get inode corresponding to path.
+     * Get the data block from inode and write contents of the buffer to
+     * the position specified by offset. 
+     */
+    for(i=0;i<sb->ninode;i++){
+      if(strcmp(it[i].path,path)==0){  /*We found a match!*/
+            block_num=it[i].inode;
+            struct inode* readbuf;
+            
+            int status=block_read(block_num,&readbuf);
+            if(status>0){
+                file_descriptor=readbuf->data_block;
+                retstat=pwrite(file_descriptor,&buf,size,offset);
+            }
+            else{
+                log_msg("Error reading block\n");
+            }
+            break;
+      }
+    }
     
     return retstat;
 }
@@ -522,7 +627,7 @@ int sfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offse
     int i,j;
     for(i=0;i<sb->ninode;i++){
       if(strcmp(it[i].path,path)==0){ 
-            for(j=0;j<(sizeof(it[0].child_nodes)/sizeof(int));j++){
+            for(j=0;j<(sizeof(it[i].child_nodes)/sizeof(int));j++){
                 if(it[j].inode==it[i].child_nodes[j]){
                     log_msg("Adding path %s\n",it[j].path);
                     filler(buf, it[j].path, NULL, 0);
